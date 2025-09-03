@@ -45,12 +45,9 @@ DIAGRAMMATIC REPRESENTATION OF CONTROL FLOW
 
 TECHNOLOGY STACK
 The technology stack for our project consists of 4 parts:
-1)
-2)
-3)
-Front-End
-Back-End
-Database
+1)Front-End
+2)Back-End
+3)Database
 
 FRONT-END
 We have included a website in our project which monitors door and window
@@ -69,7 +66,7 @@ The website is designed using
 <img width="1000" height="561" alt="image" src="https://github.com/user-attachments/assets/5ed7a6f5-25ac-4c78-9f3e-a7d19ad66643" />
 
 1. Markup Layer (HTML5)
-●Uses semantic elements (<h1>, <h2>, <div>, <form>, <table>, etc.) to outline the page structure.
+●Uses semantic elements (`<h1>, <h2>, <div>, <form>, <table>, etc.`) to outline the page structure.
 ●Tabbed interfaces are implemented by toggling active classes on different <div>s.
 2. Styling Layer (CSS3)
 ●Custom CSS: Written in a <style> block—no external frameworks.
