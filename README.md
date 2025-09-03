@@ -1,13 +1,13 @@
 # iot-homesecurity
 
-INTRODUCTION
-PROBLEM STATEMENT :
+INTRODUCTION<br>
+PROBLEM STATEMENT :<br>
 ○Traditional security measures like manual locks and basic surveillance cameras
 are often inadequate. <br>
 ○Need for a more intelligent, automated system leveraging IoT technology for
 real-time monitoring and alerts. <br>
 
-PROJECT AIM
+PROJECT AIM<br>
 ●Window Motion Detection: Detect motion near windows to monitor for unauthorized entry. <br>
 ●Access Control: Grant access to the premises only to enrolled residents and track any unauthorized access attempts. Furthermore, one-time access will be granted to guests using otp generation. <br>
 ●Automated Locking/Unlocking: Integrate actuators to automatically lock or unlock doors and windows
@@ -18,7 +18,7 @@ effectiveness. <br>
 ●Comprehensive Sensor Integration: Utilize a variety of sensors along with a relay module and actuators
 for enhanced security functionality. <br>
 
-TECHNOLOGIES INVOLVED
+TECHNOLOGIES INVOLVED<br>
 1.Cloud (MongoDB & ThingSpeak): Thingspeak facilitates real-time data collection, analysis, and alert notifications. 
 MongoDB stores data like personal details (name and biometric id) and access permissions. <br>
 2.Edge Computing (Fingerprint sensor): The R 307 S processes fingerprint data, converts it into templates, and
