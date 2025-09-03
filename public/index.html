@@ -1,0 +1,726 @@
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>Smart Home Security Dashboard</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; }
+      input, button, select { margin: 5px; padding: 8px; font-size: 16px; }
+      .tab-buttons { margin: 10px 0; }
+      .tab-buttons button { padding: 10px; }
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
+      .email-tab-content { display: none; }
+      .email-tab-content.active { display: block; }
+      table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+
+      /* Simple card styling for door controls/status */
+      .cards-container {
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+      .card {
+        flex: 1;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 20px;
+        min-width: 300px;
+      }
+      .lock-button {
+        background-color: #28a745; 
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        margin-right: 5px;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      .unlock-button {
+        background-color: #dc3545; 
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        margin-right: 5px;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      .door-status-dot, .window-status-dot, .intruder-dot, .loadingstatusdot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 4px;
+      }
+      .locked-dot { background-color: green; }
+      .unlocked-dot { background-color: red; }
+      .open-dot { background-color: orange; }
+      .closed-dot { background-color: gray; }
+      
+      /* Window status styling */
+      .window-closed { background-color: green; }
+      .window-open { background-color: red; }
+
+      /*intruderdots*/
+      .intruder-open { background-color: red; }
+      .intruder-closed { background-color: green; }
+
+      .loading-open { background-color: red; }
+      .loading-closed { background-color: green; }
+    </style>
+  </head>
+  <body>
+    <h1>Smart Home Security Dashboard</h1>
+
+    <!-- DOOR CONTROLS & STATUS -->
+    <div class="cards-container">
+      <!-- Door Controls Card -->
+      <div class="card">
+        <h2>🚪 Door Controls</h2>
+        <div>
+          <h3>Main Door</h3>
+          <button class="lock-button" onclick="updateDoor('main', true)">Lock</button>
+          <button class="unlock-button" onclick="updateDoor('main', false)">Unlock</button>
+        </div>
+        <div>
+          <h3>Garden Door</h3>
+          <button class="lock-button" onclick="updateDoor('garden', true)">Lock</button>
+          <button class="unlock-button" onclick="updateDoor('garden', false)">Unlock</button>
+        </div>
+      </div>
+
+      <!-- Door Status Card -->
+      <div class="card">
+        <h2>🚪 Door Status</h2>
+        <p>
+          Main Door: 
+          <span id="mainDoorLockedDot" class="door-status-dot"></span>
+          <span id="mainDoorLockedText"></span>
+        </p>
+        <p>
+          Garden Door: 
+          <span id="gardenDoorLockedDot" class="door-status-dot"></span>
+          <span id="gardenDoorLockedText"></span>
+        </p>
+        <p>Last Activity: <span id="doorLastActivity">--</span></p>
+      </div>
+      
+      <!-- Window Status Card -->
+    <div class="card">
+      <h2>🪟 Window Status</h2>
+      <div id="windowsStatusContainer">
+        <p>
+          Window Status: 
+          <span id="windowLockedDot" class="window-status-dot"></span>
+          <span id="windowLockedText"></span>
+        </p>
+        <p>Last Activity: <span id="windowLastActivity">--</span></p>
+      </div>
+    </div>
+
+    <!-- Intruder Status Card -->
+    <div class="card">
+      <h2>🚨 Intruder Status</h2>
+      <div id="intruderStatusContainer">
+        <p>
+          Intruder Detection: 
+          <span id="intruderStatusDot" class="intruder-dot"></span>
+          <span id="intruderStatusText"></span>
+        </p>
+        <p>Last Activity: <span id="intruderLastActivity">--</span></p>
+      </div>
+    </div>
+    </div>
+
+    <!-- PEOPLE MANAGEMENT PORTAL -->
+    <h2 style="margin-top: 40px;">People Management Portal</h2>
+    <div class="tab-buttons">
+      <button onclick="openTab('addTab')">Add Person</button>
+      <button onclick="openTab('updateTab')">Update Person</button>
+      <button onclick="openTab('deleteTab')">Delete Person</button>
+    </div>
+
+    <!-- Add Person Tab -->
+    <div id="addTab" class="tab-content active">
+      <h3>Add Person</h3>
+      <form id="addForm">
+        <input type="text" name="name" placeholder="Enter Name" required>
+        <input type="text" name="biometricid" placeholder="Enter Biometric ID" required>
+        <!-- Door Access Checkboxes -->
+        <label>
+          <input type="checkbox" name="door_main" value="main">
+          Main Door Access
+        </label>
+        <label>
+          <input type="checkbox" name="door_garden" value="garden">
+          Garden Door Access
+        </label>
+        <button type="submit">Add Person</button>
+      </form>
+    </div>
+
+    <!-- Update Person Tab -->
+    <div id="updateTab" class="tab-content">
+      <h3>Update Person</h3>
+      <select id="updateSelect" onchange="loadPersonDetails()">
+        <option value="">Select Person</option>
+      </select>
+      <input type="text" id="updateName" placeholder="New Name">
+      <!-- Update Door Access Checkboxes -->
+      <label>
+        <input type="checkbox" id="updateMainDoorAccess" value="main">
+        Main Door Access
+      </label>
+      <label>
+        <input type="checkbox" id="updateGardenDoorAccess" value="garden">
+        Garden Door Access
+      </label>
+      <button onclick="updatePerson()">Update</button>
+    </div>
+
+    <!-- Delete Person Tab -->
+    <div id="deleteTab" class="tab-content">
+      <h3>Delete Person</h3>
+      <select id="deleteSelect">
+        <option value="">Select Person</option>
+      </select>
+      <button onclick="deletePerson()">Delete</button>
+    </div>
+
+    <div class="card">
+      <h2>⏳ Loading Status</h2>
+      <div id="loadingStatusContainer">
+        <p>
+          System Status: 
+          <span id="loadingstatusdot" class="loadingstatusdot"></span>
+          <span id="loadingStatusText"></span>
+        </p>
+        <p>Last Activity: <span id="loadingLastActivity">--</span></p>
+      </div>
+    </div>
+
+
+    <!-- People Table -->
+    <h3>All People</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Biometric ID</th>
+          <th>Door Access</th>
+        </tr>
+      </thead>
+      <tbody id="peopleTable">
+        <!-- People data will be inserted here -->
+      </tbody>
+    </table>
+
+    <!-- EMAIL MANAGEMENT PORTAL -->
+    <h2 style="margin-top: 40px;">Email Management Portal</h2>
+    <div class="tab-buttons">
+      <button onclick="openEmailTab('emailAddTab')">Add Email</button>
+      <button onclick="openEmailTab('emailUpdateTab')">Update Email</button>
+      <button onclick="openEmailTab('emailDeleteTab')">Delete Email</button>
+    </div>
+
+    <div id="emailAddTab" class="email-tab-content active">
+      <h3>Add Email</h3>
+      <form id="addEmailForm">
+        <input type="text" name="email" placeholder="Enter Email" required>
+        <button type="submit">Add</button>
+      </form>
+    </div>
+
+    <div id="emailUpdateTab" class="email-tab-content">
+      <h3>Update Email</h3>
+      <select id="emailUpdateSelect" onchange="loadEmailDetails()">
+        <option value="">Select Person</option>
+      </select>
+      <input type="text" id="emailUpdateInput" placeholder="New Email">
+      <button onclick="updateEmail()">Update</button>
+    </div>
+
+    <div id="emailDeleteTab" class="email-tab-content">
+      <h3>Delete Email</h3>
+      <select id="emailDeleteSelect">
+        <option value="">Select Person</option>
+      </select>
+      <button onclick="deleteEmail()">Delete</button>
+    </div>
+
+
+    <script>
+
+    const ALERT_PASSWORD = "secret123";
+    let isHandlingAlert = false;
+
+    async function checkAlerts() {
+      if (isHandlingAlert) return;
+
+      try {
+        const res = await fetch('/api/checkalerts');
+        const { alertTriggered, ledTriggered } = await res.json();
+
+        if (alertTriggered || ledTriggered) {
+          isHandlingAlert = true;
+          const source = alertTriggered ? 'ALERT' : 'LED';
+
+          let attempt;
+          do {
+            attempt = prompt(`🚨 SECURITY ALERT (${source})! Enter admin password:`);
+            if (attempt === null) {
+              // cancelled → reset flag and exit
+              isHandlingAlert = false;
+              return;
+            }
+          } while (attempt !== ALERT_PASSWORD);
+
+          // correct password → clear both fields via your reset endpoint
+          const reset = await fetch('/api/resetalerts', { method: 'POST' });
+          if (!reset.ok) {
+            console.error('Failed to reset alerts');
+            alert('⚠️ Unable to reset alerts, check console for details.');
+          } else {
+            alert('✅ Alerts cleared (both fields set to 0)');
+          }
+
+          isHandlingAlert = false;
+        }
+      } catch (err) {
+        console.error('Alert check failed:', err);
+        isHandlingAlert = false;
+      }
+    }
+
+    // poll every 5 seconds
+    setInterval(checkAlerts, 17000);
+
+
+      // --------------------------
+      // WINDOW FUNCTIONS
+      // --------------------------
+      async function fetchWindows() {
+        const res = await fetch('/api/windows');
+        return await res.json();
+      }
+
+      async function loadWindowStatus() {
+        try {
+          const windowData = await fetchWindows();
+          // Find the window by name
+          const window = windowData.find(w => w.name === 'window');
+          
+          if (window) {
+            const windowLocked = window.locked;
+            
+            // Update window lock status UI
+            document.getElementById('windowLockedDot').className = windowLocked 
+              ? 'window-status-dot locked-dot' 
+              : 'window-status-dot unlocked-dot';
+            document.getElementById('windowLockedText').textContent = windowLocked 
+              ? 'Locked' 
+              : 'Unlocked';
+              
+            // Update the timestamp
+            document.getElementById('windowLastActivity').textContent = new Date(window.lastActivity).toLocaleString();
+          } else {
+            console.error("Window data not found");
+          }
+        } catch (error) {
+          console.error("Error loading window status:", error);
+        }
+      }
+
+      setInterval(loadWindowStatus, 5000);
+
+      // --------------------------
+      // LOADING FUNCTIONS
+      // --------------------------
+      async function fetchloading() {
+        const res = await fetch('/api/loading');
+        return await res.json();
+      }
+
+
+  async function loadloadingStatus() {
+  try {
+    const loadingData = await fetchloading();
+    const loading = loadingData.find(w => w.name === 'loading');
+    
+    if (loading) {
+      const isLoading = loading.locked;
+      
+      // Update loading status UI
+      const dotElement = document.getElementById('loadingstatusdot');
+      const textElement = document.getElementById('loadingStatusText');
+      
+      dotElement.className = isLoading 
+        ? 'loadingstatusdot loading-open' 
+        : 'loadingstatusdot loading-closed';
+      
+      textElement.textContent = isLoading 
+        ? 'System Processing' 
+        : 'System Ready';
+        
+      document.getElementById('loadingLastActivity').textContent = 
+        new Date().toLocaleString();
+    } else {
+      console.error("Loading data not found");
+    }
+  } catch (error) {
+    console.error("Error loading status:", error);
+  }
+}
+
+      setInterval(loadloadingStatus, 5000);
+
+      // --------------------------
+      // INTRUDER FUNCTIONS
+      // --------------------------
+      async function fetchintruder() {
+        const res = await fetch('/api/intruder');
+        return await res.json();
+      }
+
+      let previousIntruderState = false;
+
+  async function loadintruderStatus() {
+    try {
+      const intruderData = await fetchintruder();
+      const intruder = intruderData.find(w => w.name === 'intruder');
+      
+      if (intruder) {
+        const intruderDetected = intruder.locked;
+        
+        // Update intruder status UI
+        const dotElement = document.getElementById('intruderStatusDot');
+        const textElement = document.getElementById('intruderStatusText');
+        
+        dotElement.className = intruderDetected 
+          ? 'intruder-dot intruder-open' 
+          : 'intruder-dot intruder-closed';
+        textElement.textContent = intruderDetected 
+          ? 'Intruder Detected!' 
+          : 'No Intruders';
+        document.getElementById('intruderLastActivity').textContent = 
+          new Date(intruder.lastActivity).toLocaleString();
+
+        // Show alert if intruder state changed from false to true
+        if (intruderDetected && !previousIntruderState) {
+          alert('🚨 INTRUDER DETECTED! 🚨\n\nTimestamp: ' + 
+                new Date(intruder.lastActivity).toLocaleString());
+        }
+        
+        // Update previous state
+        previousIntruderState = intruderDetected;
+      } else {
+        console.error("Intruder data not found");
+      }
+    } catch (error) {
+      console.error("Error loading intruder status:", error);
+    }
+  }
+
+      setInterval(loadintruderStatus, 5000);
+      
+      // --------------------------
+      // DOOR FUNCTIONS
+      // --------------------------
+      async function fetchDoors() {
+        const res = await fetch('/api/doors');
+        return await res.json();
+      }
+
+      async function loadDoorStatus() {
+        try {
+          const doorData = await fetchDoors();
+
+          // Find doors by name (or use indices like before)
+          const mainDoor = doorData.find(d => d.doorName === 'main');
+          const gardenDoor = doorData.find(d => d.doorName === 'garden');
+
+          const mainDoorLocked = mainDoor.locked;
+          const gardenDoorLocked = gardenDoor.locked;
+
+          // Update main door UI
+          document.getElementById('mainDoorLockedDot').className = mainDoorLocked 
+            ? 'door-status-dot locked-dot' 
+            : 'door-status-dot unlocked-dot';
+          document.getElementById('mainDoorLockedText').textContent = mainDoorLocked 
+            ? 'Locked' 
+            : 'Unlocked';
+
+          // Update garden door UI
+          document.getElementById('gardenDoorLockedDot').className = gardenDoorLocked 
+            ? 'door-status-dot locked-dot' 
+            : 'door-status-dot unlocked-dot';
+          document.getElementById('gardenDoorLockedText').textContent = gardenDoorLocked 
+            ? 'Locked' 
+            : 'Unlocked';
+
+          // Update the timestamp
+          document.getElementById('doorLastActivity').textContent = new Date().toLocaleString();
+        } catch (error) {
+          console.error("Error loading door status:", error);
+        }
+      }
+
+      setInterval(loadDoorStatus, 5000);
+
+      
+
+      async function updateDoor(door, isLock) {
+        const fieldNumber = door === 'main' ? 1 : door === 'garden' ? 2 : null;
+        if (!fieldNumber) return;
+
+        const value = isLock ? 1 : 0;
+
+        try {
+          const res = await fetch('/api/sendChannel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channel: fieldNumber, value })
+          });
+          const result = await res.json();
+          console.log(result.message);
+        } catch (err) {
+          console.error('Failed to update door:', err);
+        }
+      }
+
+      // --------------------------
+      // PEOPLE FUNCTIONS
+      // --------------------------
+      async function fetchPeople() {
+        const res = await fetch('/api/people');
+        return await res.json();
+      }
+
+      async function loadPeople() {
+        const people = await fetchPeople();
+        const tableBody = document.getElementById('peopleTable');
+        tableBody.innerHTML = people.map(p => `
+          <tr>
+            <td>${p.name}</td>
+            <td>${p.biometricid}</td>
+            <td>${p.doors ? p.doors.join(', ') : ''}</td>
+          </tr>
+        `).join('');
+        
+        const updateSelect = document.getElementById('updateSelect');
+        const deleteSelect = document.getElementById('deleteSelect');
+        updateSelect.innerHTML = '<option value="">Select Person</option>';
+        deleteSelect.innerHTML = '<option value="">Select Person</option>';
+        people.forEach(p => {
+          const optionText = `${p.name} (${p.biometricid})${p.doors ? ' - ' + p.doors.join(', ') : ''}`;
+          const option = `<option value="${p.biometricid}">${optionText}</option>`;
+          updateSelect.innerHTML += option;
+          deleteSelect.innerHTML += option;
+        });
+      }
+
+      document.getElementById('addForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const doors = [];
+      if (formData.get('door_main'))   doors.push("main");
+      if (formData.get('door_garden')) doors.push("garden");
+      const data = Object.fromEntries(formData.entries());
+      delete data.door_main;
+      delete data.door_garden;
+      data.doors = doors;
+        
+      // ① Attempt to add to MongoDB
+      const addRes = await fetch('/api/people', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    
+      if (addRes.status === 409) {
+        // duplicate‑ID: stop everything
+        alert('Biometric ID already exists. Please use a different ID.');
+        return;
+      }
+      if (!addRes.ok) {
+        alert('Server error adding person. Try again.');
+        return;
+      }
+    
+      // ② Only on success (201) do we proceed with ThingSpeak pushes:
+      const biometricId = data.biometricid;
+      async function sendTS(ch, val) {
+        await fetch('/api/sendChannel', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ channel: ch, value: val })
+        });
+      }
+      await sendTS(3, 1);
+      await sendTS(4, biometricId);
+    
+      this.reset();
+      loadPeople();
+      loadEmails();
+    });
+    
+    
+
+      // When a person is selected in the update tab, load their door access checkboxes
+      async function loadPersonDetails() {
+        const biometricid = document.getElementById('updateSelect').value;
+        if (!biometricid) return;
+        const people = await fetchPeople();
+        const person = people.find(p => p.biometricid === biometricid);
+        if (person) {
+          document.getElementById('updateName').value = person.name;
+          document.getElementById('updateMainDoorAccess').checked = person.doors && person.doors.includes("main");
+          document.getElementById('updateGardenDoorAccess').checked = person.doors && person.doors.includes("garden");
+        }
+      }
+
+      async function updatePerson() {
+        const biometricid = document.getElementById('updateSelect').value;
+        const newName = document.getElementById('updateName').value;
+        if (!biometricid || !newName) {
+          alert('Select a person and enter a new name.');
+          return;
+        }
+        const doors = [];
+        if (document.getElementById('updateMainDoorAccess').checked) { doors.push("main"); }
+        if (document.getElementById('updateGardenDoorAccess').checked) { doors.push("garden"); }
+        await fetch(`/api/people/${biometricid}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName, doors })
+        });
+        document.getElementById('updateName').value = '';
+        loadPeople();
+        loadEmails(); // Reload emails when people are updated
+      }
+
+      async function deletePerson() {
+        const biometricid = document.getElementById('deleteSelect').value;
+        if (!biometricid) {
+          alert('Select a person to delete.');
+          return;
+        }
+        await fetch(`/api/people/${biometricid}`, {
+          method: 'DELETE'
+        });
+        loadPeople();
+        loadEmails(); // Reload emails when people are updated
+      }
+
+      // --------------------------
+      // TAB FUNCTIONS
+      // --------------------------
+      // hide/show only the people portal tabs
+      function openTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+      }
+
+      // hide/show only the email portal tabs
+      function openEmailTab(tabId) {
+        document.querySelectorAll('.email-tab-content').forEach(tab => tab.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        
+        // Refresh email data when switching tabs
+        loadEmails();
+      }
+
+      // --------------------------
+      // EMAIL FUNCTIONS
+          // --------------------------
+          async function fetchEmails() {
+        const res = await fetch('/api/emails');
+        return await res.json(); // expects [{ email }, …]
+      }
+
+      async function loadEmails() {
+        try {
+          const emails = await fetchEmails();
+          const upd = document.getElementById('emailUpdateSelect');
+          const del = document.getElementById('emailDeleteSelect');
+          upd.innerHTML = '<option value="">Select Email</option>';
+          del.innerHTML = '<option value="">Select Email</option>';
+          emails.forEach(item => {
+            const opt = `<option value="${item.email}">${item.email}</option>`;
+            upd.innerHTML += opt;
+            del.innerHTML += opt;
+          });
+        } catch (error) {
+          console.error("Error loading emails:", error);
+        }
+      }
+
+      async function loadEmailDetails() {
+        const email = document.getElementById('emailUpdateSelect').value;
+        if (!email) return;
+        document.getElementById('emailUpdateInput').value = email;
+      }
+
+      document.getElementById('addEmailForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const email = e.target.email.value.trim();
+        if (!email) return alert('Enter an email');
+        try {
+          await fetch('/api/emails', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ email })
+          });
+          e.target.reset();
+          await loadEmails();
+        } catch (error) {
+          console.error("Error adding email:", error);
+          alert("Failed to add email. Please try again.");
+        }
+      });
+
+      async function updateEmail() {
+        const oldEmail = document.getElementById('emailUpdateSelect').value;
+        const newEmail = document.getElementById('emailUpdateInput').value.trim();
+        if (!oldEmail || !newEmail) return alert('Select and enter a new email');
+        try {
+          await fetch(`/api/emails/${encodeURIComponent(oldEmail)}`, {
+            method: 'PUT',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ email: newEmail })
+          });
+          document.getElementById('emailUpdateInput').value = '';
+          await loadEmails();
+        } catch (error) {
+          console.error("Error updating email:", error);
+          alert("Failed to update email. Please try again.");
+        }
+      }
+
+      async function deleteEmail() {
+        const email = document.getElementById('emailDeleteSelect').value;
+        if (!email) return alert('Select an email to delete');
+        try {
+          await fetch(`/api/emails/${encodeURIComponent(email)}`, { method: 'DELETE' });
+          await loadEmails();
+        } catch (error) {
+          console.error("Error deleting email:", error);
+          alert("Failed to delete email. Please try again.");
+        }
+      }
+
+          // Initialize everything when page loads
+          (async function initAll() {
+        loadPeople();
+        loadDoorStatus();
+        loadWindowStatus();
+        loadloadingStatus(); 
+        await loadEmails();
+      })();
+
+      setInterval(checkAlertStatus, 16000);
+      
+    </script>
+  </body>
+  </html>

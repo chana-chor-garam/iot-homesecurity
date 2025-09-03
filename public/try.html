@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Smart Home Security Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .cards-container {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .card {
+      flex: 1;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 20px;
+      min-width: 300px;
+    }
+    .door-status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+    .locked-dot { background-color: green; }
+    .unlocked-dot { background-color: red; }
+  </style>
+</head>
+<body>
+  <h1>Smart Home Security Dashboard</h1>
+
+  <!-- DOOR STATUS CARD -->
+  <div class="cards-container">
+    <div class="card">
+      <h2>🚪 Door Status</h2>
+      <p>
+        Main Door: 
+        <span id="mainDoorLockedDot" class="door-status-dot"></span>
+        <span id="mainDoorLockedText"></span>
+      </p>
+      <p>Last Updated: <span id="doorLastUpdate">--</span></p>
+    </div>
+  </div>
+
+  <script>
+    // URL to the JSON file on ThingSpeak
+    const THINGSPEAK_URL = "https://thingspeak.mathworks.com/channels/2922408/field/1/last.json";
+    // Polling interval in milliseconds (e.g., 5000 ms = 5 seconds)
+    const POLL_INTERVAL = 5000;
+
+    function loadDoorStatus() {
+      fetch(THINGSPEAK_URL)
+        .then(response => response.json())
+        .then(json => {
+          // Assumes the returned JSON has a key "field1" with a value "1" (locked) or "0" (unlocked)
+          const value = json.field1;
+          const isLocked = (value === "1" || value === 1);
+          
+          // Update the dot's class and text accordingly
+          document.getElementById('mainDoorLockedDot').className = isLocked ? 'door-status-dot locked-dot' : 'door-status-dot unlocked-dot';
+          document.getElementById('mainDoorLockedText').textContent = isLocked ? 'Locked' : 'Unlocked';
+          document.getElementById('doorLastUpdate').textContent = new Date().toLocaleString();
+        })
+        .catch(error => {
+          console.error("Error fetching door status:", error);
+        });
+    }
+
+    // Initial fetch and then repeat every POLL_INTERVAL milliseconds
+    loadDoorStatus();
+    setInterval(loadDoorStatus, POLL_INTERVAL);
+  </script>
+</body>
+</html>

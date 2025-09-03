@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Live Value Display</title>
+</head>
+<body>
+  <h1>Current Value: <span id="value">–</span></h1>
+
+  <script>
+    // Endpoint on your server that returns { value: "0" } or { value: "1" }
+    const VALUE_URL = '/api/value'; 
+
+    async function fetchValue() {
+      try {
+        const res  = await fetch(VALUE_URL);
+        const json = await res.json();
+        document.getElementById('value').innerText = json.value;
+      } catch (err) {
+        console.error('Error fetching value:', err);
+      }
+    }
+
+    // initial fetch, then every 5 seconds
+    fetchValue();
+    setInterval(fetchValue, 5000);
+  </script>
+</body>
+</html>

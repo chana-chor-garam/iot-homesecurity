@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Verify OTP</title></head>
+<body>
+  <h2>Enter the OTP sent to your email</h2>
+  <p>Expires in <span id="countdown">{{ remaining_time }}</span>s</p>
+
+  <form action="/verify-otp" method="post">
+    <input name="otp" placeholder="OTP" required>
+    <button>Verify</button>
+  </form>
+  <form action="/resend-otp" method="post"><button>Resend</button></form>
+
+  <script>
+    let cnt = parseInt(document.getElementById("countdown").innerText,10);
+    (function tick(){
+      if(cnt>0){
+        cnt--; document.getElementById("countdown").innerText = cnt;
+        setTimeout(tick,1000);
+      } else {
+        window.location = "/";
+      }
+    })();
+  </script>
+</body>
+</html>
